@@ -14,6 +14,7 @@ namespace Symfony\Component\Mailer\Bridge\Sendgrid\Transport;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractApiTransport;
 use Symfony\Component\Mime\Address;
@@ -94,8 +95,9 @@ class SendgridApiTransport extends AbstractApiTransport
             $personalization['bcc'] = $emails;
         }
         if ($emails = array_map($addressStringifier, $email->getReplyTo())) {
-            // Email class supports an array of reply-to addresses,
-            // but SendGrid only supports a single address
+            if (1 < $length = \count($emails)) {
+                throw new TransportException(sprintf('Sendgrid\'s API only supports one Reply-To email, %d given.', $length));
+            }
             $payload['reply_to'] = $emails[0];
         }
 
